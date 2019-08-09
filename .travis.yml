@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t puvth/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true puvth/react-test npm test
+
+after_success:
+  - docker build -t puvth/multi-client  ./client
+  - docker build -t puvth/multi-nginx ./nginx
+  - docker build -t puvth/multi-server  ./server
+  - docker build -t puvth/multi-worker  ./worker 
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker  login -u  "$DOCKER_ID"  --password-stdin
+  # Take those images and push them to docker hub
+  - docker push puvth/multi-client
+  - docker push puvth/multi-nginx
+  - docker push puvth/multi-server
+  - docker push puvth/multi-worker
